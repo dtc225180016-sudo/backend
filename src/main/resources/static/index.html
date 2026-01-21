@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Tư Vấn Tuyển Sinh Thông Minh</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <linkcdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* --- CÀI ĐẶT CHUNG --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body {
+            background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%); /* Nền màu trời nhẹ nhàng chuyên nghiệp */
+            height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+
+        /* --- KHUNG CHAT CHÍNH --- */
+        .app-container {
+            width: 100%; max-width: 480px; height: 90vh; max-height: 750px;
+            background: #fff; border-radius: 25px; overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column;
+        }
+
+        /* --- PHẦN HEADER (THANH TRÊN CÙNG) --- */
+        .chat-header {
+            background: #0066cc; color: white; padding: 15px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 10;
+        }
+        .header-info { display: flex; align-items: center; }
+        .bot-avatar-header {
+            width: 45px; height: 45px; background: white; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; margin-right: 12px;
+            color: #0066cc; font-size: 24px;
+        }
+        .header-text h3 { font-size: 1.1rem; font-weight: 600; }
+        .status { font-size: 0.8rem; opacity: 0.9; display: flex; align-items: center; }
+        .status-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; margin-right: 5px; }
+        .header-actions i { font-size: 1.2rem; margin-left: 15px; cursor: pointer; opacity: 0.8; transition: 0.2s; }
+        .header-actions i:hover { opacity: 1; }
+
+        /* --- CỬA SỔ CHAT --- */
+        #chat-box {
+            flex: 1; background: #f5f7fb; padding: 20px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .message-row { display: flex; align-items: flex-end; margin-bottom: 10px; }
+        .bot-row { justify-content: flex-start; }
+        .user-row { justify-content: flex-end; }
+
+        .avatar { width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-bottom: 5px; font-size: 16px; flex-shrink: 0; }
+        .bot-avatar { background: #e1e8ed; color: #0066cc; margin-right: 10px; }
+        .user-avatar { background: #0066cc; color: white; margin-left: 10px; order: 2; }
+
+        .msg-content {
+            padding: 12px 16px; border-radius: 20px; max-width: 75%; word-wrap: break-word;
+            font-size: 0.95rem; line-height: 1.4; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            animation: popUp 0.3s ease-out;
+        }
+        @keyframes popUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .bot-msg { background: white; color: #333; border-bottom-left-radius: 5px; }
+        .user-msg { background: #0066cc; color: white; border-bottom-right-radius: 5px; order: 1;}
+
+        .timestamp { font-size: 0.7rem; color: #999; margin-top: 5px; margin-left: 5px; }
+        .user-row .timestamp { text-align: right; margin-right: 5px; }
+
+        /* --- TRẠNG THÁI ĐANG GÕ --- */
+        .typing-indicator {
+            display: none; padding: 10px 20px; background: white; border-radius: 20px;
+            width: fit-content; margin-left: 45px; margin-bottom: 15px; color: #888; font-style: italic; font-size: 0.9rem;
+        }
+        .dots span { animation: blink 1.4s infinite both; }
+        .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
+
+        /* --- KHU VỰC GỢI Ý NHANH (Nút bấm thêm) --- */
+        .quick-replies {
+            padding: 10px 20px; display: flex; gap: 10px; overflow-x: auto;
+            background: #f5f7fb; border-top: 1px solid #eee;
+            /* Ẩn thanh cuộn nhưng vẫn cuộn được */
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .quick-replies::-webkit-scrollbar { display: none; }
+
+        .quick-btn {
+            white-space: nowrap; padding: 8px 15px; background: white; border: 1px solid #0066cc;
+            color: #0066cc; border-radius: 20px; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+        }
+        .quick-btn:hover { background: #0066cc; color: white; }
+
+        /* --- KHU VỰC NHẬP LIỆU (INPUT AREA) --- */
+        .input-area {
+            padding: 15px 20px; background: white; border-top: 1px solid #eee;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .icon-btn {
+            font-size: 1.3rem; color: #999; cursor: pointer; transition: 0.2s; padding: 5px;
+        }
+        .icon-btn:hover { color: #0066cc; }
+
+        .input-wrapper {
+            flex: 1; position: relative; display: flex; align-items: center;
+        }
+        input {
+            width: 100%; padding: 12px 45px 12px 20px; border: 1px solid #ddd; border-radius: 30px;
+            outline: none; font-size: 1rem; transition: 0.3s; background: #f9f9f9;
+        }
+        input:focus { border-color: #0066cc; background: white; }
+        .input-emoji { position: absolute; right: 15px; color: #999; cursor: pointer; }
+
+        .send-btn {
+            width: 45px; height: 45px; background: #0066cc; color: white; border: none;
+            border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center;
+            font-size: 1.1rem; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,102,204,0.3);
+        }
+        .send-btn:hover { transform: scale(1.05); background: #0055aa; }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <div class="chat-header">
+        <div class="header-info">
+            <div class="bot-avatar-header"><i class="fa-solid fa-robot"></i></div>
+            <div class="header-text">
+                <h3>Trợ Lý Tuyển Sinh AI</h3>
+                <div class="status"><div class="status-dot"></div>Đang hoạt động</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <i class="fa-solid fa-phone" title="Gọi hotline"></i>
+            <i class="fa-solid fa-circle-info" title="Thông tin"></i>
+            <i class="fa-solid fa-ellipsis-vertical" title="Menu"></i>
+        </div>
+    </div>
+
+    <div id="chat-box">
+        <div class="message-row bot-row">
+            <div class="avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div>
+                <div class="msg-content bot-msg">Xin chào! 👋 Em là AI hỗ trợ tuyển sinh của trường. Thầy/Cô hoặc các bạn thí sinh cần thông tin gì cứ hỏi em nhé!</div>
+                <div class="timestamp">Vừa xong</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="typing" class="typing-indicator">
+        <div class="bot-row" style="margin-bottom: 0;">
+            <div class="avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="msg-content bot-msg dots" style="padding: 10px 15px;">AI đang suy nghĩ<span>.</span><span>.</span><span>.</span></div>
+        </div>
+    </div>
+
+    <div class="quick-replies">
+        <button class="quick-btn" onclick="sendQuick('Điểm chuẩn năm nay thế nào?')">📊 Điểm chuẩn 2025</button>
+        <button class="quick-btn" onclick="sendQuick('Trường có những ngành nào hot?')">🔥 Ngành Hot</button>
+        <button class="quick-btn" onclick="sendQuick('Học phí một kỳ là bao nhiêu?')">💰 Học phí</button>
+        <button class="quick-btn" onclick="sendQuick('Thủ tục nhập học cần gì?')">📝 Thủ tục nhập học</button>
+    </div>
+
+    <div class="input-area">
+        <i class="fa-solid fa-paperclip icon-btn" title="Đính kèm file (Demo)"></i>
+        <div class="input-wrapper">
+            <input type="text" id="user-input" placeholder="Nhập câu hỏi tại đây...">
+            <i class="fa-regular fa-face-smile input-emoji icon-btn"></i>
+        </div>
+        <button class="send-btn" onclick="sendMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const typingIndicator = document.getElementById('typing');
+
+    // Hàm lấy giờ hiện tại
+    function getCurrentTime() {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+
+    // Hàm cuộn xuống cuối
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Hàm thêm tin nhắn vào khung chat
+    function appendMessage(sender, text) {
+        const time = getCurrentTime();
+        let msgHTML = '';
+
+        if (sender === 'user') {
+            msgHTML = `
+                <div class="message-row user-row">
+                    <div>
+                        <div class="msg-content user-msg">${text}</div>
+                        <div class="timestamp">${time}</div>
+                    </div>
+                    <div class="avatar user-avatar"><i class="fa-solid fa-user"></i></div>
+                </div>`;
+        } else {
+            msgHTML = `
+                <div class="message-row bot-row">
+                    <div class="avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div>
+                        <div class="msg-content bot-msg">${text}</div>
+                        <div class="timestamp">${time}</div>
+                    </div>
+                </div>`;
+        }
+        chatBox.insertAdjacentHTML('beforeend', msgHTML);
+        scrollToBottom();
+    }
+
+    // Hàm gửi tin nhắn gợi ý nhanh
+    function sendQuick(text) {
+        userInput.value = text;
+        sendMessage();
+    }
+
+    // Hàm gửi tin nhắn chính
+    async function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        // 1. Hiện tin nhắn người dùng
+        appendMessage('user', message);
+        userInput.value = '';
+
+        // 2. Hiện hiệu ứng đang gõ
+        typingIndicator.style.display = 'block';
+        scrollToBottom();
+
+        try {
+            // 3. Gọi Backend (Vẫn là cái API cũ của bạn)
+            const response = await fetch('/chat?message=' + encodeURIComponent(message));
+            const botReply = await response.text();
+
+            // 4. Tắt hiệu ứng gõ và hiện câu trả lời
+            typingIndicator.style.display = 'none';
+            appendMessage('bot', botReply);
+
+        } catch (error) {
+            typingIndicator.style.display = 'none';
+            appendMessage('bot', '⚠️ Xin lỗi, hệ thống đang bảo trì. Vui lòng thử lại sau!');
+        }
+    }
+
+    // Gõ Enter để gửi
+    userInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</body>
+</html>

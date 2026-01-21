@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hệ thống Quản trị Chatbot</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f4f7f6; }
+        table { width: 100%; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #075e54; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+<h2>Quản lý Lịch sử Tư vấn</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Câu hỏi của Thí sinh</th>
+        <th>Bot trả lời</th>
+        <th>Thời gian</th>
+    </tr>
+    </thead>
+    <tbody id="log-table">
+    </tbody>
+</table>
+
+<script>
+    // Hàm này để lấy dữ liệu từ Backend và hiện lên bảng
+    async function loadLogs() {
+        let response = await fetch('/api/logs'); // Chúng ta sẽ tạo API này ở Backend
+        let logs = await response.json();
+        let table = document.getElementById('log-table');
+        table.innerHTML = logs.map(log => `
+                <tr>
+                    <td>${log.userMessage}</td>
+                    <td>${log.botResponse}</td>
+                    <td>${new Date(log.createdAt).toLocaleString()}</td>
+                </tr>
+            `).join('');
+    }
+    loadLogs();
+</script>
+</body>
+</html>
